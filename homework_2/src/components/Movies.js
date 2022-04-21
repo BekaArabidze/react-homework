@@ -1,21 +1,31 @@
 
+import { useEffect } from "react"
+
 import { GlobalContext } from "../context/AppContext"
 import "./movies.scss"
 import Button from './Button';
 
 
+import { TYPES } from "../reducer/MovieReducer"
+
+
 const Movies = () => {
-    const { movies, deleteMovie,status } = GlobalContext();
+    const { state, dispatch, status } = GlobalContext();
 
     if (status.loading) {
         return <div className='loading'>Loading data</div>
     }
 
+    // useEffect(() => {
+    //     console.log(state.movies && state.movies);
+    // }, [])
+
+
     return (
         <>
 
             <div className="movies">
-                {movies ? movies.map((movie, _) => (
+                {state.movies ? state.movies.map((movie, _) => (
                     <div className="container" key={movie.imdbID}>
                         <div className="poster" style={{ backgroundImage: `url(${movie.Poster})` }} />
 
@@ -28,7 +38,9 @@ const Movies = () => {
                         </div>
 
                         <div className="remove">
-                            <Button event="delete" handleEvent={() => deleteMovie(movie.imdbID)} />
+                            <Button event="delete"
+                                handleEvent={() => dispatch({ type: TYPES.REMOVE_MOVIE, payload: { id: movie.imdbID } })}
+                            />
                         </div>
                     </div>
                 ))

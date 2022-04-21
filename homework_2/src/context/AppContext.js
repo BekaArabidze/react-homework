@@ -1,21 +1,25 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useReducer } from 'react'
+import { reducer, TYPES, initialState } from "../reducer/MovieReducer"
+
+
 const AppContext = createContext();
 
 
+
 const AppProvider = ({ children }) => {
+    const [status, setStatus] = useState({ loading: false, msg: "", err: false })
+
+    const [state, dispatch] = useReducer(reducer, initialState)
     const url = `http://www.omdbapi.com/?i=tt3896198&apikey=${process.env.REACT_APP_API_KEY}`
-    
+
+
     function randomNum(min, max) {
-        return Math.floor(Math.random() * (max - min)) + min; 
+        return Math.floor(Math.random() * (max - min)) + min;
     }
 
 
-    const [movies, setMovies] = useState([])
-    const [query, setQuery] = useState("superman")
-    const [status, setStatus] = useState({ loading: false, msg: "", err: false })
-    
-    const [add, setAdd] = useState({
-        imdbID:randomNum(1,10000),
+    const [addMovie, setAddMovie] = useState({
+        imdbID: randomNum(1, 10000),
         Poster: "https://source.unsplash.com/random/",
         Title: "",
         Year: ""
@@ -31,7 +35,7 @@ const AppProvider = ({ children }) => {
             const data = await response.json();
 
             if (data.Response === 'True') {
-                setMovies(data.Search);
+                dispatch({ type: TYPES.SET_MOVIES, payload: data.Search ?? [] });
                 setStatus({ loading: false, msg: "", err: false })
             } else {
                 setStatus({ loading: true, msg: "error...something happend", err: false })
@@ -47,33 +51,17 @@ const AppProvider = ({ children }) => {
 
 
     useEffect(() => {
-        fetchMovies(`${url}&s=${query.length == 0 ? "batman" : query}`)
-        console.log(add.Title);
-    }, [query])
+        fetchMovies(`${url}&s=${state.query.length == 0 ? "batman" : state.query}`)
+    }, [state.query])
 
 
 
-
-    //! delets one movie
-    const deleteMovie = (id) => {
-        const deleted = movies.filter(el => el.imdbID != id)
-        setMovies(deleted)
+    const addNewMovie = () => {
+        dispatch({ type: TYPES.SET_MOVIES, payload: [...state.movies, addMovie] });
+        // console.log([...state.movies, add]);
     }
 
-    //! adding data
-    const addMovie = (e) => {
-        const { value, name } = e.target
-        setAdd({ ...add, [name]: value })
-        // console.log({ ...add, [name]: value });
-    }
-
-
-    const addNewUser = () => {
-        setMovies([...movies, add])
-        // console.log([...movies, add]);
-    }
-
-    const value = { movies, deleteMovie, setMovies, query, setQuery, status,add,addMovie,addNewUser }
+    const value = { state, dispatch, status, addMovie, setAddMovie, addNewMovie }
 
     return (
         <AppContext.Provider value={value}>
